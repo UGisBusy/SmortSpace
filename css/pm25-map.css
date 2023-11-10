@@ -1,0 +1,82 @@
+body {
+    margin: 0px;
+    padding: 0px;
+}
+
+#main {
+    width: 100%;
+    height: 100vh;
+    background-color: #ffffff;
+}
+
+#map {
+    width: 100%;
+    height: 100vh;
+    float: left;
+}
+
+#form {
+    width: 30%;
+    height: 100vh;
+    text-align: center;
+    line-height: 280px;
+    font-size: 15px;
+    color: #f9c81e;
+    font-weight: bold;
+    Float: left;
+}
+
+#upForm {
+    width: 100%;
+    height: 40%;
+}
+
+#downForm {
+    width: 100%;
+    height: 30%;
+}
+
+#yearForm {
+    width: 100%;
+    height: 30%;
+}
+
+.slidecontainer {
+    width: 50%;
+    /* Width of the outside container */
+    position: absolute;
+    margin-left: 10%;
+    margin-right: 40%;
+    bottom: 30px;
+    z-index: 5;
+}
+
+.slider {
+    -webkit-appearance: none;
+    width: 100%;
+    height: 15px;
+    border-radius: 5px;
+    background: #d3d3d3;
+    outline: none;
+    opacity: 0.9;
+    -webkit-transition: .2s;
+    transition: opacity .2s;
+}
+
+.slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 35px;
+    height: 35px;
+    border-radius: 50%;
+    background: #4CAF50;
+    cursor: pointer;
+}
+
+.slider::-moz-range-thumb {
+    width: 35px;
+    height: 35px;
+    border-radius: 50%;
+    background: #4CAF50;
+    cursor: pointer;
+}
