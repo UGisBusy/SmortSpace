@@ -5,7 +5,7 @@ var option;
 
 function init(centerCoord) {
     //設定Mapbox的取用Token。
-    mapboxgl.accessToken = 'pk.eyJ1IjoiYmlhYm9ibyIsImEiOiJjamVvejdlNXQxZnBuMㄈndtdWhiZHRuaTNpIn0.PIS9wtUxm_rz_IzF2WFD1g';
+    mapboxgl.accessToken = 'pk.eyJ1IjoiYmlhYm9ibyIsImEiOiJjamVvejdlNXQxZnBuMndtdWhiZHRuaTNpIn0.PIS9wtUxm_rz_IzF2WFD1g';
     chart = echarts.init(document.getElementById('map'));
 
     //設定echarts載入mapbox的參數值
@@ -245,19 +245,19 @@ function createSqureCoords(center_coord, radius) {
         result.push(destination);
     }
     result.push(result[0]);  // 加入起點為最後一條線終點
-    var line = [    
-    [24.055407, 121.161853],    //票亭
-    [24.056401,121.162561],     //綿羊
-    [24.054522, 121.162127],    //高空步道
-    [24.052259, 121.160329],    //表演
-    [24.054432, 121.161263],    //牧區
-    [24.055407, 121.161853]     //票亭
+    var line = [
+        [121.161853, 24.055407],    //票亭
+        [121.162561, 24.056401],     //綿羊
+        [121.162127, 24.054522],    //高空步道
+        [121.160329, 24.052259],    //表演
+        [121.161263, 24.054432],    //牧區
+        [121.161853, 24.055407]     //票亭
     ];
 
-    for (var i = 0; i < result.length; i++) {
-        line.push(result[i].geometry.coordinates);
-        // console.log(result[i].geometry.coordinates);
-    }
+    // for (var i = 0; i < result.length; i++) {
+    //     line.push(result[i].geometry.coordinates);
+    //     // console.log(result[i].geometry.coordinates);
+    // }
     return createFlightPointsData(getPointsFromLineByStaticDistance(line), dataHeight);
 }
 
