@@ -3,42 +3,61 @@
 <script src="./dist/echarts-gl11.min.js"></script>
 <script src="./dist/simplex-noise.js"></script>
 <script src="./dist/turf.min.js" charset="utf-8"></script>
-<script src='https://api.tiles.mapbox.com/mapbox-gl-js/v0.44.1/mapbox-gl.js'></script>
-<link href='https://api.tiles.mapbox.com/mapbox-gl-js/v0.44.1/mapbox-gl.css' rel='stylesheet' />
+<script src="https://api.tiles.mapbox.com/mapbox-gl-js/v0.44.1/mapbox-gl.js"></script>
+<link
+  href="https://api.tiles.mapbox.com/mapbox-gl-js/v0.44.1/mapbox-gl.css"
+  rel="stylesheet"
+/>
 <script type="text/javascript" src="./dist/jquery-3.2.1.min.js"></script>
 <script src="map.js"></script>
-<link type="text/css" rel="stylesheet" href="./css/pm25-map.css?v=2">
-<link type="text/css" rel="stylesheet" href="./dist/jquery.toast.min.css">
+<link type="text/css" rel="stylesheet" href="./css/pm25-map.css?v=2" />
+<link type="text/css" rel="stylesheet" href="./dist/jquery.toast.min.css" />
 
 <head>
-    <meta charset="utf-8">
-    <!-- 處理畫面有時過度放大的問題 -->
-    <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1">
-    <title></title>
+  <meta charset="utf-8" />
+  <!-- 處理畫面有時過度放大的問題 -->
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1"
+  />
+  <title></title>
 </head>
 
 <body scroll="no" style="overflow: hidden">
-    <div id="main">
-        <div id='map'></div>
-    </div>
+  <div id="main">
+    <div id="map"></div>
+  </div>
 
-    <script type="text/javascript">
-        //設定地圖出現時的中心座標點。
-        let centerCoord = [24.055407, 121.161853];
-        //設定數據高度。
-        let dataHeight = 50;
+  <script type="text/javascript">
+    //設定地圖座標點
+    let points = [
+      [121.161853, 24.055407], //票亭
+      [121.162561, 24.056401], //綿羊
+      [121.162127, 24.054522], //高空步道
+      [121.160329, 24.052259], //表演
+      [121.161263, 24.054432], //牧區
+    ];
 
-        init(centerCoord);
-        loadMap();
+    console.log(points);
 
-        var points = createSqureCoords(centerCoord, 0.3);                //輸入中心點與正方形半徑(KM)
-        // var points = createStarCoords(centerCoord, 0.3);                 //輸入中心點與米字半徑(KM)
-        // var points = createFunnelCoords(centerCoord, 0.3);               //輸入中心點與漏斗形半徑(KM)
-        // var points = createCircleCoords(centerCoord, 0.3);               //輸入中心點與圓形半徑(KM)
-        // var points = createSpringCoords(centerCoord, 0.2, 5, 10, 200);    //輸入中心點, 圓形半徑(KM), 圓圈數, 最低高度(m), 最高高度(m)
-        // var points = createPyramidCoords(centerCoord, 0.3, 0.97, 9, 20, dataHeight)  //輸入中心點、正方形半徑(KM), 遞減半徑比例, 層數, 層高(m), 最低高度(m)
+    //設定地圖出現時的中心座標點
+    let centroid = [0, 0];
+    for (let i = 0; i < points.length; i++) {
+      centroid[0] += points[i][0];
+      centroid[1] += points[i][1];
+    }
+    centroid[0] /= points.length;
+    centroid[1] /= points.length;
 
-        loadScatterFlightPlanPath(points);
-        // loadScatterFlightPlanPath(points.concat(points1));
-    </script>
+    //設定數據高度
+    let dataHeight = 50;
+
+    //初始化地圖
+    init([centroid[1], centroid[0]]);
+    loadMap();
+
+    //繪製飛行路徑
+    let data = createFlightPointsData(points, dataHeight);
+    loadScatterFlightPlanPath(data);
+  </script>
 </body>
