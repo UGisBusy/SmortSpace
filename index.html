@@ -4,10 +4,7 @@
 <script src="./dist/simplex-noise.js"></script>
 <script src="./dist/turf.min.js" charset="utf-8"></script>
 <script src="https://api.tiles.mapbox.com/mapbox-gl-js/v0.44.1/mapbox-gl.js"></script>
-<link
-  href="https://api.tiles.mapbox.com/mapbox-gl-js/v0.44.1/mapbox-gl.css"
-  rel="stylesheet"
-/>
+<link href="https://api.tiles.mapbox.com/mapbox-gl-js/v0.44.1/mapbox-gl.css" rel="stylesheet" />
 <script type="text/javascript" src="./dist/jquery-3.2.1.min.js"></script>
 <script src="map.js"></script>
 <link type="text/css" rel="stylesheet" href="./css/pm25-map.css?v=2" />
@@ -29,35 +26,29 @@
   </div>
 
   <script type="text/javascript">
-    //設定地圖座標點
-    let points = [
-      [121.161853, 24.055407], //票亭
-      [121.162561, 24.056401], //綿羊
-      [121.162127, 24.054522], //高空步道
-      [121.160329, 24.052259], //表演
-      [121.161263, 24.054432], //牧區
-    ];
-
-    console.log(points);
-
-    //設定地圖出現時的中心座標點
-    let centroid = [0, 0];
-    for (let i = 0; i < points.length; i++) {
-      centroid[0] += points[i][0];
-      centroid[1] += points[i][1];
-    }
-    centroid[0] /= points.length;
-    centroid[1] /= points.length;
-
     //設定數據高度
     let dataHeight = 50;
 
+    //設定站點, type 0: 站點, 1: 飛行路徑
+    let stations = [
+      turf.point([121.161853, 24.055407], { height: dataHeight, type: 'station' }),
+      turf.point([121.162561, 24.056401], { height: dataHeight, type: 'station' }),
+      turf.point([121.162127, 24.054522], { height: dataHeight, type: 'station' }),
+      turf.point([121.160329, 24.052259], { height: dataHeight, type: 'station' }),
+      turf.point([121.161263, 24.054432], { height: dataHeight, type: 'station' }),
+    ];
+
+    //設定地圖出現時的中心座標點
+    let centroidCoord = turf.centroid(turf.featureCollection(stations)).geometry.coordinates;
+
     //初始化地圖
-    init([centroid[1], centroid[0]]);
+    init([centroidCoord[1], centroidCoord[0]]);
     loadMap();
 
+    //設定飛行路徑 (每單位分割站點路徑)
+    let path = makePath(stations, 0.01, dataHeight);
+
     //繪製飛行路徑
-    let data = createFlightPointsData(points, dataHeight);
-    loadScatterFlightPlanPath(data);
+    drawPoints(path);
   </script>
 </body>
