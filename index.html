@@ -31,11 +31,11 @@
 
     //設定站點, type: station, path
     let stations = [
-      turf.point([121.161853, 24.055407], { height: dataHeight, type: 'station' }),
-      turf.point([121.162561, 24.056401], { height: dataHeight, type: 'station' }),
-      turf.point([121.162127, 24.054522], { height: dataHeight, type: 'station' }),
+      turf.point([121.161853, 24.055407], { height: dataHeight + 20, type: 'station' }),
+      turf.point([121.162561, 24.056401], { height: dataHeight + 20, type: 'station' }),
+      turf.point([121.162127, 24.054522], { height: dataHeight + 20, type: 'station' }),
       turf.point([121.160329, 24.052259], { height: dataHeight, type: 'station' }),
-      turf.point([121.161263, 24.054432], { height: dataHeight, type: 'station' }),
+      turf.point([121.161263, 24.054432], { height: dataHeight + 100, type: 'station' }),
     ];
 
     //設定地圖出現時的中心座標點
@@ -46,7 +46,7 @@
     loadMap();
 
     //設定飛行路徑 (每單位分割站點路徑)
-    let path = makePath(stations, 20, dataHeight);
+    let path = makePath(stations, 0.005, dataHeight);
 
     //繪製飛行路徑
     drawPoints(path);

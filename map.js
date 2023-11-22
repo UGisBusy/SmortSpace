@@ -55,27 +55,10 @@ function init(centerCoord) {
         fontSize: 16,
       },
     },
-    // add a slider bar
-    toolbox: {
-      show: true,
-      orient: 'vertical',
-      left: 50,
-      top: 100,
-      feature: {
-        myToolChargePath: {
-          show: true,
-          title: 'Toggle Charge Path',
-          icon: 'image://https://echarts.apache.org/en/images/favicon.png',
-          onclick: function () {
-            ToggleChargePath();
-          },
-        },
-      },
-    },
   };
 }
 
-function makePath(station, sample, dataHeight) {
+function makePath(station, sampleDistance, dataHeight) {
   //兩站點連成線
   let stationLoop = station.concat([station[0]]);
   let line = turf.lineString(stationLoop.map((point) => point.geometry.coordinates));
@@ -100,14 +83,66 @@ function makePath(station, sample, dataHeight) {
       });
     }
   });
-  //加上屬性後轉成點陣列
-  let path = [];
-  allPoints.forEach((point, index) => {
-    if (index % sample === 0) {
-      path.push(point);
+  let samplePoints = [allPoints[0]];
+  let cur = allPoints[0];
+  for (let i = 1; i < allPoints.length; i++) {
+    neww = allPoints[i];
+    if (neww.properties.type == 'station') {
+      cur = neww;
+      samplePoints.push(cur);
+    } else if (turf.distance(cur, neww) >= sampleDistance) {
+      cur = neww;
+      samplePoints.push(cur);
+    }
+  }
+  return smooth(samplePoints);
+}
+
+function smooth(points) {
+  let stationIds = [];
+  points.forEach((point, index) => {
+    if (point.properties.type == 'station') {
+      stationIds.push(index);
     }
   });
-  return path;
+  let newPoints = [];
+  let curStationId = 0;
+  let smoothId = 0;
+  let smoothStart = 0;
+  let smoothEnd = 0;
+  let smoothSize = 0;
+  let firstHeight = 0;
+  points.forEach((point) => {
+    if (point.properties.type == 'station') {
+      smoothStart = points[stationIds[curStationId]].properties.height;
+      smoothEnd = points[stationIds[(curStationId + 1) % stationIds.length]].properties.height;
+      console.log(smoothStart, smoothEnd);
+      if (curStationId == stationIds.length - 1) {
+        smoothSize = points.length - stationIds[curStationId] + stationIds[0];
+      } else {
+        smoothSize = stationIds[(curStationId + 1) % stationIds.length] - stationIds[curStationId];
+      }
+      smoothId = 0;
+      curStationId++;
+      if (firstHeight === 0) {
+        firstHeight = getSmoothValue(smoothStart, smoothEnd, smoothSize, smoothId);
+      }
+      point.properties.height = getSmoothValue(smoothStart, smoothEnd, smoothSize, smoothId++);
+      newPoints.push(point);
+    } else {
+      point.properties.height = getSmoothValue(smoothStart, smoothEnd, smoothSize, smoothId++);
+      newPoints.push(point);
+    }
+  });
+  newPoints[0].properties.height =
+    (getSmoothValue(smoothStart, smoothEnd, smoothSize, smoothId++) + firstHeight) / 2;
+  return newPoints;
+}
+
+function getSmoothValue(start, end, size, id) {
+  let sigmoid = (x) => 1 / (1 + Math.exp(-x));
+  let t = id / (size - 1);
+  return start + (end - start) * sigmoid(5 * (t - 0.5));
 }
 
 function drawPoints(points) {
