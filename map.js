@@ -38,10 +38,10 @@ function init(centerCoord) {
       type: 'piecewise',
       dimension: 3,
       //以類型分類，station為綠色，path為藍色
-      categories: ['station', 'path'],
+      categories: ['station', 'path', 'charge path'],
       inRange: {
-        color: ['green', 'blue'],
-        opacity: [1, 0.1],
+        color: ['green', 'blue', 'red'],
+        opacity: [1, 0.1, 0.05],
       },
       seriesIndex: [0, 1],
       itemWidth: 36,
@@ -57,6 +57,42 @@ function init(centerCoord) {
       },
     },
   };
+}
+
+//載入地圖
+function loadMap() {
+  //進行echarts設定，餵入之前定義好的常數-option
+  chart.setOption(option, true);
+  //從echarts取得mapbox的實體
+  var map = chart.getModel().getComponent('mapbox3D')._mapbox;
+  //地圖圖資載入完畢後，顯示在Mapbox上的3D建築物圖層。
+  map.on('load', function () {
+    var layers = map.getStyle().layers;
+    var labelLayerId;
+    for (var i = 0; i < layers.length; i++) {
+      if (layers[i].type === 'symbol' && layers[i].layout['text-field']) {
+        labelLayerId = layers[i].id;
+        break;
+      }
+    }
+    map.addLayer(
+      {
+        id: '3d-buildings',
+        source: 'composite',
+        'source-layer': 'building',
+        filter: ['==', 'extrude', 'true'],
+        type: 'fill-extrusion',
+        minzoom: 15,
+        paint: {
+          'fill-extrusion-color': '#8EAACB',
+          'fill-extrusion-height': ['interpolate', ['linear'], ['zoom'], 15, 0, 15.05, ['get', 'height']],
+          'fill-extrusion-base': ['interpolate', ['linear'], ['zoom'], 15, 0, 15.05, ['get', 'min_height']],
+          'fill-extrusion-opacity': 0.6,
+        },
+      },
+      labelLayerId
+    );
+  });
 }
 
 function makePath(station, sampleDistance) {
@@ -188,16 +224,21 @@ function getSmoothValue(start, end, size, id) {
   return start + (end - start) * sigmoid(8 * (t - 0.5));
 }
 
-function drawPoints(points) {
-  //畫點到echarts上
-  var data = [];
+function makeDrawData(points) {
+  //將點轉換成echarts繪製的格式
+  let drawData = [];
   points.forEach((point) => {
-    data.push({
+    drawData.push({
       name: point.properties.name ? point.properties.name : '',
       //資料改成：[經度, 緯度, 高度, 類型]
       value: [...point.geometry.coordinates, point.properties.height, point.properties.type],
     });
   });
+  return drawData;
+}
+
+function draw(data) {
+  //畫點到echarts上
   chart.setOption({
     series: [
       {
@@ -216,38 +257,27 @@ function drawPoints(points) {
   });
 }
 
-//載入地圖
-function loadMap() {
-  //進行echarts設定，餵入之前定義好的常數-option
-  chart.setOption(option, true);
-  //從echarts取得mapbox的實體
-  var map = chart.getModel().getComponent('mapbox3D')._mapbox;
-  //地圖圖資載入完畢後，顯示在Mapbox上的3D建築物圖層。
-  map.on('load', function () {
-    var layers = map.getStyle().layers;
-    var labelLayerId;
-    for (var i = 0; i < layers.length; i++) {
-      if (layers[i].type === 'symbol' && layers[i].layout['text-field']) {
-        labelLayerId = layers[i].id;
-        break;
-      }
+function makeChargePaths(path) {
+  //建立每條充電路徑的端點
+  let EndpointPairs = [];
+  path.forEach((point) => {
+    if (point.properties.type == 'station') {
+      let ground = turf.point(point.geometry.coordinates, { height: 0, type: 'station' });
+      EndpointPairs.push([ground, point]);
     }
-    map.addLayer(
-      {
-        id: '3d-buildings',
-        source: 'composite',
-        'source-layer': 'building',
-        filter: ['==', 'extrude', 'true'],
-        type: 'fill-extrusion',
-        minzoom: 15,
-        paint: {
-          'fill-extrusion-color': '#8EAACB',
-          'fill-extrusion-height': ['interpolate', ['linear'], ['zoom'], 15, 0, 15.05, ['get', 'height']],
-          'fill-extrusion-base': ['interpolate', ['linear'], ['zoom'], 15, 0, 15.05, ['get', 'min_height']],
-          'fill-extrusion-opacity': 0.6,
-        },
-      },
-      labelLayerId
-    );
   });
+
+  //每條充電路徑每單位加入路徑點
+  let stepHeight = 10;
+  let paths = [];
+  EndpointPairs.forEach((pair) => {
+    let path = [];
+    let current = pair[0];
+    while (current.properties.height < pair[1].properties.height) {
+      path.push(current);
+      current = turf.point(current.geometry.coordinates, { height: current.properties.height + stepHeight, type: 'charge path' });
+    }
+    paths.push(path.concat(pair[1]));
+  });
+  return paths;
 }

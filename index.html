@@ -26,7 +26,7 @@
     //設定數據高度
     let dataHeight = 50;
 
-    //設定站點, type: station, path
+    //設定站點, type: station, path, charge path
     /* prettier-ignore */
     let stations = [
       turf.point([121.161853, 24.055407], { height: dataHeight + 80,  type: 'station' }), //票亭
@@ -46,7 +46,18 @@
     //設定飛行路徑 (每單位分割站點路徑)
     let path = makePath(stations, 0.005);
 
-    //繪製飛行路徑
-    drawPoints(path);
+    //飛行路徑繪製數據
+    let drawData = makeDrawData(path);
+
+    //充電路徑
+    let chargePaths = makeChargePaths(path);
+
+    //充電路徑繪製數據
+    chargePaths.forEach((path) => {
+      drawData = drawData.concat(makeDrawData(path));
+    });
+
+    //繪製所有路徑
+    draw(drawData);
   </script>
 </body>
