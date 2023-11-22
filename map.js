@@ -112,8 +112,10 @@ function smooth(points) {
   let smoothEnd = 0;
   let smoothSize = 0;
   let firstHeight = 0;
+  let lastHeight = 0;
   points.forEach((point) => {
     if (point.properties.type == 'station') {
+      lastHeight = getSmoothValue(smoothStart, smoothEnd, smoothSize, smoothId);
       smoothStart = points[stationIds[curStationId]].properties.height;
       smoothEnd = points[stationIds[(curStationId + 1) % stationIds.length]].properties.height;
       console.log(smoothStart, smoothEnd);
@@ -126,8 +128,10 @@ function smooth(points) {
       curStationId++;
       if (firstHeight === 0) {
         firstHeight = getSmoothValue(smoothStart, smoothEnd, smoothSize, smoothId);
+      } else {
+        point.properties.height =
+          (getSmoothValue(smoothStart, smoothEnd, smoothSize, smoothId++) + lastHeight) / 2;
       }
-      point.properties.height = getSmoothValue(smoothStart, smoothEnd, smoothSize, smoothId++);
       newPoints.push(point);
     } else {
       point.properties.height = getSmoothValue(smoothStart, smoothEnd, smoothSize, smoothId++);
