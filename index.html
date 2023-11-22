@@ -29,7 +29,7 @@
     //設定數據高度
     let dataHeight = 50;
 
-    //設定站點, type 0: 站點, 1: 飛行路徑
+    //設定站點, type: station, path
     let stations = [
       turf.point([121.161853, 24.055407], { height: dataHeight, type: 'station' }),
       turf.point([121.162561, 24.056401], { height: dataHeight, type: 'station' }),
@@ -46,7 +46,7 @@
     loadMap();
 
     //設定飛行路徑 (每單位分割站點路徑)
-    let path = makePath(stations, 0.01, dataHeight);
+    let path = makePath(stations, 20, dataHeight);
 
     //繪製飛行路徑
     drawPoints(path);

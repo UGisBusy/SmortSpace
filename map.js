@@ -58,21 +58,29 @@ function init(centerCoord) {
   };
 }
 
-function makePath(station, distance, dataHeight) {
+function makePath(station, sample, dataHeight) {
   //兩站點連成線
   let stationLoop = station.concat([station[0]]);
   let line = turf.lineString(stationLoop.map((point) => point.geometry.coordinates));
   //轉成貝氏曲線
   let curve = turf.bezierSpline(line, { sharpness: 0.9 });
-  //線段分割
-  let chunk = turf.lineChunk(curve, distance, { units: 'kilometers', reverse: true });
+  //取得曲線上的點
+  let allPoints = [];
+  curve.geometry.coordinates.forEach((point, index, array) => {
+    allPoints.push(point);
+    if (index % 10 === 9) {
+      let nextPoint = array[(index + 1) % array.length];
+      let distance = turf.distance(point, nextPoint);
+      let chunk = turf.lineChunk(turf.lineString([point, nextPoint]), distance / 12);
+      chunk.features.forEach((point) => {
+        allPoints.push(point.geometry.coordinates[1]);
+      });
+    }
+  });
   //加上屬性後轉成點陣列
   let path = [];
-  // chunk.features.forEach((point) => {
-  //   path.push(turf.point(point.geometry.coordinates[0], { height: dataHeight, type: 'path' }));
-  // });
-  curve.geometry.coordinates.forEach((point, id) => {
-    if (id % 2 === 0) {
+  allPoints.forEach((point, index) => {
+    if (index % sample === 0) {
       path.push(turf.point(point, { height: dataHeight, type: 'path' }));
     }
   });
