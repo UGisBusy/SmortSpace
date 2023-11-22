@@ -55,6 +55,23 @@ function init(centerCoord) {
         fontSize: 16,
       },
     },
+    // add a slider bar
+    toolbox: {
+      show: true,
+      orient: 'vertical',
+      left: 50,
+      top: 100,
+      feature: {
+        myToolChargePath: {
+          show: true,
+          title: 'Toggle Charge Path',
+          icon: 'image://https://echarts.apache.org/en/images/favicon.png',
+          onclick: function () {
+            ToggleChargePath();
+          },
+        },
+      },
+    },
   };
 }
 
@@ -64,16 +81,22 @@ function makePath(station, sample, dataHeight) {
   let line = turf.lineString(stationLoop.map((point) => point.geometry.coordinates));
   //轉成貝氏曲線
   let curve = turf.bezierSpline(line, { sharpness: 0.9 });
-  //取得曲線上的點
+  //取得曲線上的點、加上站點、補上缺失的部分
   let allPoints = [];
+  let stationId = 0;
   curve.geometry.coordinates.forEach((point, index, array) => {
-    allPoints.push(point);
+    if (index % 100 === 0) {
+      allPoints.push(stationLoop[stationId++]);
+    } else {
+      allPoints.push(turf.point(point, { height: dataHeight, type: 'path' }));
+    }
     if (index % 10 === 9) {
       let nextPoint = array[(index + 1) % array.length];
       let distance = turf.distance(point, nextPoint);
       let chunk = turf.lineChunk(turf.lineString([point, nextPoint]), distance / 12);
       chunk.features.forEach((point) => {
-        allPoints.push(point.geometry.coordinates[1]);
+        point = point.geometry.coordinates[1];
+        allPoints.push(turf.point(point, { height: dataHeight, type: 'path' }));
       });
     }
   });
@@ -81,10 +104,10 @@ function makePath(station, sample, dataHeight) {
   let path = [];
   allPoints.forEach((point, index) => {
     if (index % sample === 0) {
-      path.push(turf.point(point, { height: dataHeight, type: 'path' }));
+      path.push(point);
     }
   });
-  return path.concat(station);
+  return path;
 }
 
 function drawPoints(points) {
@@ -163,4 +186,12 @@ function loadMap() {
       labelLayerId
     );
   });
+}
+
+var isShowChargePath = false;
+function ToggleChargePath() {
+  if (isShowChargePath) {
+    console.log('ye');
+  }
+  isShowChargePath = !isShowChargePath;
 }
