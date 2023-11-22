@@ -13,10 +13,7 @@
 <head>
   <meta charset="utf-8" />
   <!-- 處理畫面有時過度放大的問題 -->
-  <meta
-    name="viewport"
-    content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1"
-  />
+  <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1" />
   <title></title>
 </head>
 
@@ -30,12 +27,13 @@
     let dataHeight = 50;
 
     //設定站點, type: station, path
+    /* prettier-ignore */
     let stations = [
-      turf.point([121.161853, 24.055407], { height: dataHeight + 20, type: 'station' }),
-      turf.point([121.162561, 24.056401], { height: dataHeight + 20, type: 'station' }),
-      turf.point([121.162127, 24.054522], { height: dataHeight + 20, type: 'station' }),
-      turf.point([121.160329, 24.052259], { height: dataHeight, type: 'station' }),
-      turf.point([121.161263, 24.054432], { height: dataHeight + 100, type: 'station' }),
+      turf.point([121.161853, 24.055407], { height: dataHeight + 80,  type: 'station' }), //票亭
+      turf.point([121.162561, 24.056401], { height: dataHeight + 130, type: 'station' }), //綿羊
+      turf.point([121.162127, 24.054522], { height: dataHeight + 40,  type: 'station' }), //高空步道
+      turf.point([121.160329, 24.052259], { height: dataHeight - 20,  type: 'station' }), //表演
+      turf.point([121.161263, 24.054432], { height: dataHeight + 30,  type: 'station' }), //牧區
     ];
 
     //設定地圖出現時的中心座標點
@@ -46,7 +44,7 @@
     loadMap();
 
     //設定飛行路徑 (每單位分割站點路徑)
-    let path = makePath(stations, 0.01, dataHeight);
+    let path = makePath(stations, 0.005);
 
     //繪製飛行路徑
     drawPoints(path);
