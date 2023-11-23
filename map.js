@@ -37,7 +37,7 @@ function init(centerCoord) {
     visualMap: {
       type: 'piecewise',
       dimension: 3,
-      //以類型分類，station為綠色，path為藍色
+      //以類型分類，station為綠色，path為藍色，charge path為紅色
       categories: ['station', 'path', 'charge path'],
       inRange: {
         color: ['green', 'blue', 'red'],
@@ -117,7 +117,7 @@ function getPointsOnCurve(curve, stationLoop) {
   let line = turf.lineString([...curve.geometry.coordinates]);
   let chunk = turf.lineChunk(line, 0.0001);
   chunk.features.forEach((point) => {
-    point = turf.point(point.geometry.coordinates[1], { height: dataHeight, type: 'path' });
+    point = turf.point(point.geometry.coordinates[1], { height: 0, type: 'path' });
     if (turf.distance(point, stationLoop[stationId]) <= 0.0001) {
       allPoints.push(stationLoop[stationId++]);
     } else {
@@ -134,9 +134,6 @@ function getSamplePoints(points, sampleDistance) {
   for (let i = 1; i < points.length; i++) {
     next = points[i];
     if (next.properties.type == 'station' || turf.distance(current, next) >= sampleDistance) {
-      if (next.properties.type == 'station') {
-        console.log('aaa');
-      }
       if (turf.distance(current, next) < sampleDistance) {
         //如果站點離sample裡的上一點太近，取代其為此站點
         samplePoints.pop();
@@ -178,7 +175,6 @@ function smoothHeight(points) {
   let smoothSize = 0;
   let firstHeight = 0;
   let lastHeight = 0;
-  console.log(stationIds);
   points.forEach((point) => {
     if (point.properties.type == 'station') {
       //每讀到站點時，設定好下一個區段的平滑函式參數
@@ -192,10 +188,8 @@ function smoothHeight(points) {
         firstHeight = getSmoothValue(smoothStart, smoothEnd, smoothSize, smoothId);
       } else {
         //站點的高度為前後兩點的平均
-        console.log(point.properties.height, point.properties.name);
         point.properties.height = (getSmoothValue(smoothStart, smoothEnd, smoothSize, smoothId++) + lastHeight) / 2;
       }
-      console.log(smoothStart, smoothEnd, smoothSize);
     } else {
       point.properties.height = getSmoothValue(smoothStart, smoothEnd, smoothSize, smoothId++);
     }
@@ -262,7 +256,7 @@ function makeChargePaths(path) {
   EndpointPairs.forEach((pair) => {
     let path = [];
     let current = pair[0];
-    while (current.properties.height < pair[1].properties.height) {
+    while (current.properties.height < pair[1].properties.height - stepHeight / 2) {
       path.push(current);
       current = turf.point(current.geometry.coordinates, { height: current.properties.height + stepHeight, type: 'charge path' });
     }
