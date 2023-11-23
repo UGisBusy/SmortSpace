@@ -41,7 +41,7 @@ function init(centerCoord) {
       categories: ['station', 'path', 'charge path'],
       inRange: {
         color: ['green', 'blue', 'red'],
-        opacity: [1, 0.1, 0.05],
+        opacity: [1, 0.1, 0.1],
       },
       seriesIndex: [0, 1],
       itemWidth: 36,
@@ -102,55 +102,41 @@ function makePath(station, sampleDistance) {
   //轉成貝氏曲線
   let curve = turf.bezierSpline(line, { sharpness: 0.9 });
   //曲線轉換成大量點
-  let allPoints = getFullPathOnCurve(curve, stationLoop);
+  let allPoints = getPointsOnCurve(curve, stationLoop);
   //取樣，留下站點 + 每sampleDistance取一個點
-  let samplePoints = getSamplePoint(allPoints, sampleDistance);
+  let samplePoints = getSamplePoints(allPoints, sampleDistance);
   //將取樣點高度平滑
   let smoothPoints = smoothHeight(samplePoints);
   return smoothPoints;
 }
 
-function getFullPathOnCurve(curve, stationLoop) {
-  /*
-  實作細節：
-    取完貝氏曲線，原始的每個線段會分成20分，其中每2個線段裡佈10個點 (一個等分空白，一個等分有10個點)
-    每線段「不」等長，有佈點的線段其點的間距也「不」相等。 (垃圾函式庫+我不想手刻)
-    => curve的點不均勻
-
-    這個getFullPathOnCurve就是補一堆點到curve上，結果就是一堆很密集但是間距不同的點。
-    => 不相等的部分由後來採樣點優化。
-    => 想法大概是：這條線上的點超級密，採樣點的時候就去check下一點的距離，如果太近就跳過，讓採樣結果的點和點間幾乎等距。
-  */
+function getPointsOnCurve(curve, stationLoop) {
+  //曲線上佈大量點，並將站點插入
   let allPoints = [];
   let stationId = 0;
-  curve.geometry.coordinates.forEach((point, index, array) => {
-    //每100個點是站點
-    if (index % 100 === 0) {
+  let line = turf.lineString([...curve.geometry.coordinates]);
+  let chunk = turf.lineChunk(line, 0.0001);
+  chunk.features.forEach((point) => {
+    point = turf.point(point.geometry.coordinates[1], { height: dataHeight, type: 'path' });
+    if (turf.distance(point, stationLoop[stationId]) <= 0.0001) {
       allPoints.push(stationLoop[stationId++]);
     } else {
-      allPoints.push(turf.point(point, { height: dataHeight, type: 'path' }));
-    }
-    //每10個點後是一個空的線段，佈20個點(越密越好)
-    if (index % 10 === 9) {
-      let nextPoint = array[(index + 1) % array.length];
-      let distance = turf.distance(point, nextPoint);
-      let chunk = turf.lineChunk(turf.lineString([point, nextPoint]), distance / 22);
-      chunk.features.forEach((point) => {
-        point = point.geometry.coordinates[1];
-        allPoints.push(turf.point(point, { height: dataHeight, type: 'path' }));
-      });
+      allPoints.push(point);
     }
   });
   return allPoints;
 }
 
-function getSamplePoint(points, sampleDistance) {
+function getSamplePoints(points, sampleDistance) {
   //將points的點每sampleDistance長度取樣
   let samplePoints = [points[0]];
   let current = points[0];
   for (let i = 1; i < points.length; i++) {
     next = points[i];
     if (next.properties.type == 'station' || turf.distance(current, next) >= sampleDistance) {
+      if (next.properties.type == 'station') {
+        console.log('aaa');
+      }
       if (turf.distance(current, next) < sampleDistance) {
         //如果站點離sample裡的上一點太近，取代其為此站點
         samplePoints.pop();
@@ -192,28 +178,31 @@ function smoothHeight(points) {
   let smoothSize = 0;
   let firstHeight = 0;
   let lastHeight = 0;
+  console.log(stationIds);
   points.forEach((point) => {
     if (point.properties.type == 'station') {
       //每讀到站點時，設定好下一個區段的平滑函式參數
       lastHeight = getSmoothValue(smoothStart, smoothEnd, smoothSize, smoothId);
       smoothStart = points[stationIds[curStationId]].properties.height;
       smoothEnd = points[stationIds[(curStationId + 1) % (stationIds.length - 1)]].properties.height;
-      smoothSize = stationIds[(curStationId + 1) % stationIds.length] - stationIds[curStationId];
+      smoothSize = stationIds[curStationId + 1] - stationIds[curStationId];
       smoothId = 0;
       curStationId++;
       if (firstHeight === 0) {
         firstHeight = getSmoothValue(smoothStart, smoothEnd, smoothSize, smoothId);
       } else {
         //站點的高度為前後兩點的平均
+        console.log(point.properties.height, point.properties.name);
         point.properties.height = (getSmoothValue(smoothStart, smoothEnd, smoothSize, smoothId++) + lastHeight) / 2;
       }
+      console.log(smoothStart, smoothEnd, smoothSize);
     } else {
       point.properties.height = getSmoothValue(smoothStart, smoothEnd, smoothSize, smoothId++);
     }
     newPoints.push(point);
   });
   //第0站點的高度為第1點高度和最後1點高度的平均
-  newPoints[0].properties.height = (getSmoothValue(smoothStart, smoothEnd, smoothSize, smoothId++) + firstHeight) / 2;
+  // newPoints[0].properties.height = (getSmoothValue(smoothStart, smoothEnd, smoothSize, smoothId++) + firstHeight) / 2;
   return newPoints;
 }
 
@@ -268,7 +257,7 @@ function makeChargePaths(path) {
   });
 
   //每條充電路徑每單位加入路徑點
-  let stepHeight = 10;
+  let stepHeight = 8;
   let paths = [];
   EndpointPairs.forEach((pair) => {
     let path = [];
